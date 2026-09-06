@@ -6,7 +6,8 @@
     <title>實驗儀器配對遊戲</title>
     <style>
         :root { --hue: 210; }
-        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+        /* 加入 height: 100vh 作為舊版瀏覽器的備用方案 */
+        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100vh; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
         h1 { color: #333; margin: 10px 0; font-size: 26px; font-weight: 800;}
         .container { max-width: 1000px; margin: 0 auto; padding: 10px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column;}
         
@@ -24,25 +25,25 @@
         .timer { color: #d32f2f; }
         .turn-indicator { color: #1976D2; }
         
-        #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; box-sizing: border-box;}
+        #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; box-sizing: border-box;}
         
-        /* 網格與卡牌 */
-        .grid { display: grid; gap: 8px; justify-content: center; align-items: center; margin: 5px auto; width: 95%; max-width: 850px; }
+        /* 網格與卡牌 (棄用 aspect-ratio，改用 vw 確保所有 Safari 都支援) */
+        .grid { display: grid; gap: 8px; justify-content: center; align-items: center; margin: 10px auto; width: 95%; max-width: 850px; }
         .grid-16 { grid-template-columns: repeat(4, 1fr); }
         .grid-15 { grid-template-columns: repeat(5, 1fr); }
         
-        .card { width: 100%; aspect-ratio: 4/3; max-height: 110px; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
+        .card { width: 100%; height: 14vw; max-height: 110px; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
         
-        /* 困難模式翻牌特效 */
+        /* 卡牌翻轉特效 (加入 Safari -webkit- 前綴) */
         .card.flipped .card-inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
         
         /* 配對成功隱藏 */
-        .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); }
+        .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); -webkit-transform: scale(0); }
         
         /* 簡單模式專用：點選高亮特效 */
         .card.practice-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .card.practice-card.selected .card-inner { transform: rotateY(180deg) scale(1.08); box-shadow: 0 0 20px 5px rgba(33, 150, 243, 0.7); border-radius: 10px;}
+        .card.practice-card.selected .card-inner { transform: rotateY(180deg) scale(1.08); -webkit-transform: rotateY(180deg) scale(1.08); box-shadow: 0 0 20px 5px rgba(33, 150, 243, 0.7); border-radius: 10px;}
 
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #bbb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-front { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; font-size: 32px; font-weight: bold; }
@@ -61,12 +62,12 @@
         th { background-color: #fbc02d; color: #333; position: sticky; top: 0; z-index: 2;}
         .loading { font-size: 16px; color: #666; margin: 20px; }
         
-        #victory-screen { justify-content: center; background: rgba(255, 255, 0.95); }
+        #victory-screen { justify-content: center; background: rgba(255, 255, 255, 0.95); }
         #victory-screen h1 { font-size: 48px; margin-bottom: 20px; color: #f44336; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .confetti { position: fixed; width: 10px; height: 10px; top: -20px; opacity: 0; z-index: 9999; }
         
         /* 彈窗樣式 */
-        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100vh; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .modal-content { background-color: #fff; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border: none; width: 85%; max-width: 420px; border-radius: 16px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
         .modal-content h3 { margin-top: 0; color: #333; font-size: 22px;}
@@ -121,12 +122,15 @@
                 <div class="table-container">
                     <table id="class-board"><thead><tr><th>排名</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
                 </div>
+            </div>
             <div class="board">
                 <h3>👑 全級排行榜</h3>
                 <div class="table-container">
                     <table id="form-board"><thead><tr><th>排名</th><th>班別</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
                 </div>
-            </div>        <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
+            </div>
+        </div>
+        <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
     </div>
 </div>
 
@@ -220,7 +224,10 @@
             <button class="btn-cancel" onclick="closeModal('admin-dashboard-modal')">取消</button>
             <button class="btn-hard" onclick="executeDelete()">🗑️ 確認刪除</button>
         </div>
-    </div><script type="module">
+    </div>
+</div>
+
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, collection, query, where, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     
@@ -246,7 +253,7 @@
     let playerClass = ''; let playerId = ''; 
     let viewClass = '1A'; let viewMode = 'hard';
     let twoPlayerState = { active: false, currentPlayer: 1, scores: { p1: 0, p2: 0 } };
-    let selectedPracticeCard = null; // 簡單模式用的變數
+    let selectedPracticeCard = null;
 
     // 初始化 Admin 學號下拉選單
     const delIdSelect = document.getElementById('del-id');
@@ -256,6 +263,7 @@
         delIdSelect.appendChild(opt);
     }
 
+    // 將函數掛載到 window 以供 onclick 呼叫
     window.openPlayerModal = function(mode) {
         currentMode = mode;
         document.getElementById('player-modal').style.display = 'block';
@@ -345,22 +353,21 @@
             cardEl.classList.add('card'); cardEl.dataset.id = card.id;
             let backContent = card.type === 'name' ? `<div class="card-text">${card.content}</div>` : `<img src="${card.content}" alt="儀器">`;
             
+            cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
+            
             if (mode.startsWith('easy')) {
-                // 簡單模式：預設把牌翻到正面 (rotateY(180deg))，並加上 selected 特效邏輯
-                cardEl.classList.add('practice-card');
-                cardEl.innerHTML = `<div class="card-inner" style="transform: rotateY(180deg);"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
+                // 簡單模式：加上 flipped class，讓 CSS 的 -webkit-transform 穩定生效
+                cardEl.classList.add('practice-card', 'flipped');
                 cardEl.addEventListener('click', function() { handleEasyClick(this); });
             } else {
-                // 困難與雙人對戰：預設蓋著，需要手動翻開
-                cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
                 cardEl.addEventListener('click', function() { flipCard(this); });
             }
             board.appendChild(cardEl);
         });
     }
 
-    // 簡單模式的點選邏輯 (全部打開)
-    function handleEasyClick(cardEl) {
+    // 簡單模式點選邏輯
+    window.handleEasyClick = function(cardEl) {
         if (cardEl.classList.contains('matched')) return;
         
         if (!selectedPracticeCard) { 
@@ -382,15 +389,15 @@
                 selectedPracticeCard = null; 
             }
         }
-    }
+    };
 
-    // 困難模式的翻牌邏輯 (蓋著)
-    function flipCard(cardEl) {
+    // 困難模式翻牌邏輯
+    window.flipCard = function(cardEl) {
         if (flippedCards.length >= requiredMatches || cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
         cardEl.classList.add('flipped');
         flippedCards.push(cardEl);
         if (flippedCards.length === requiredMatches) checkMatch();
-    }
+    };
 
     function checkMatch() {
         const isMatch = flippedCards.every(c => c.dataset.id === flippedCards[0].dataset.id);
@@ -439,7 +446,7 @@
             if (!docSnap.exists() || docSnap.data().time > secondsElapsed) {
                 await setDoc(scoreRef, { class: playerClass, studentId: parseInt(playerId), time: secondsElapsed, difficulty: currentMode, timestamp: new Date() });
             }
-        } catch (error) { console.error("儲存失敗:", error); alert("上傳失敗，請檢查網路！"); }
+        } catch (error) { console.error("儲存失敗:", error); alert("上傳失敗，請檢查網路連線！"); }
     }
 
     window.resetGame = function() { 
@@ -541,7 +548,7 @@
         setTimeout(() => { confetti.remove(); }, 5000);
     }
     const styleSheet = document.createElement("style");
-    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110dvh; opacity: 1; transform: rotate(720deg); } }`;
+    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110vh; top: 110dvh; opacity: 1; transform: rotate(720deg); } }`;
     document.head.appendChild(styleSheet);
     
     // 初始載入
