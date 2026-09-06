@@ -6,8 +6,7 @@
     <title>實驗儀器配對遊戲</title>
     <style>
         :root { --hue: 210; }
-        /* 加入 height: 100vh 作為舊版瀏覽器的備用方案 */
-        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100vh; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
         h1 { color: #333; margin: 10px 0; font-size: 26px; font-weight: 800;}
         .container { max-width: 1000px; margin: 0 auto; padding: 10px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column;}
         
@@ -25,31 +24,28 @@
         .timer { color: #d32f2f; }
         .turn-indicator { color: #1976D2; }
         
-        #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; box-sizing: border-box;}
+        /* 修復 iPad 顯示：加入 overflow-y 確保任何情況皆可滑動看完整 */
+        #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; padding-bottom: 30px; box-sizing: border-box; overflow-y: auto; -webkit-overflow-scrolling: touch;}
         
-        /* 網格與卡牌 (棄用 aspect-ratio，改用 vw 確保所有 Safari 都支援) */
+        /* 網格自動按比例縮放高度，不會被裁切 */
         .grid { display: grid; gap: 8px; justify-content: center; align-items: center; margin: 10px auto; width: 95%; max-width: 850px; }
-        .grid-16 { grid-template-columns: repeat(4, 1fr); }
-        .grid-15 { grid-template-columns: repeat(5, 1fr); }
+        .grid-16 { grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(65px, 17dvh); }
+        .grid-15 { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(70px, 20dvh); }
         
-        .card { width: 100%; height: 14vw; max-height: 110px; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
+        .card { width: 100%; height: 100%; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
-        
-        /* 卡牌翻轉特效 (加入 Safari -webkit- 前綴) */
         .card.flipped .card-inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
+        .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); }
         
-        /* 配對成功隱藏 */
-        .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); -webkit-transform: scale(0); }
-        
-        /* 簡單模式專用：點選高亮特效 */
-        .card.practice-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .card.practice-card.selected .card-inner { transform: rotateY(180deg) scale(1.08); -webkit-transform: rotateY(180deg) scale(1.08); box-shadow: 0 0 20px 5px rgba(33, 150, 243, 0.7); border-radius: 10px;}
-
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #bbb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-front { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; font-size: 32px; font-weight: bold; }
         .card-back { background-color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); padding: 5px; }
         .card-back img { max-width: 90%; max-height: 90%; object-fit: contain; pointer-events: none; }
         .card-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.2;}
+        
+        /* 簡單模式的特效 */
+        .card.practice-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .card.practice-card.selected .card-inner { transform: rotateY(180deg) scale(1.05); -webkit-transform: rotateY(180deg) scale(1.05); box-shadow: 0 0 15px 4px rgba(33, 150, 243, 0.7); border-radius: 10px;}
         
         /* 排行榜優化 */
         .leaderboard-controls { margin: 10px 0; font-size: 15px; font-weight: bold; display: flex; justify-content: center; gap: 10px; align-items: center;}
@@ -66,14 +62,13 @@
         #victory-screen h1 { font-size: 48px; margin-bottom: 20px; color: #f44336; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .confetti { position: fixed; width: 10px; height: 10px; top: -20px; opacity: 0; z-index: 9999; }
         
-        /* 彈窗樣式 */
-        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100vh; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        /* 彈窗(Modal)美化 */
+        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .modal-content { background-color: #fff; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border: none; width: 85%; max-width: 420px; border-radius: 16px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
         .modal-content h3 { margin-top: 0; color: #333; font-size: 22px;}
         .modal-content input, .modal-content select { width: calc(100% - 20px); margin-bottom: 15px; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: #f9f9f9;}
         
-        /* 生動的規則框樣式 */
         .rules-box { background: #e3f2fd; border-left: 5px solid #2196F3; padding: 15px; text-align: left; border-radius: 8px; margin-bottom: 20px; }
         .rules-box h4 { color: #1976D2; margin-top: 0; margin-bottom: 10px; font-size: 18px;}
         .rules-box ul { padding-left: 20px; margin: 0; color: #444; font-size: 15px; line-height: 1.5;}
@@ -99,7 +94,7 @@
             <button class="btn-easy" onclick="openPlayerModal('easy_name')">單人簡單 (實物+名稱)</button>
             <button class="btn-easy" onclick="openPlayerModal('easy_draw')">單人簡單 (實物+畫圖)</button>
             <button class="btn-hard" onclick="openPlayerModal('hard')">單人困難 (三卡配對)</button>
-            <button class="btn-two" onclick="startGame('two_player')">雙人對戰 (不計分)</button>
+            <button class="btn-two" onclick="openRulesModal('two_player')">雙人對戰 (不計分)</button>
         </div>
         
         <div class="leaderboard-controls">
@@ -130,6 +125,7 @@
                 </div>
             </div>
         </div>
+        
         <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
     </div>
 </div>
@@ -137,11 +133,11 @@
 <!-- 遊戲畫面 -->
 <div id="game-screen">
     <div id="game-info">
-        <div class="timer">時間: <span id="time-display">0</span> 秒</div>
+        <div class="timer">時間: <span id="time-display">0.00</span> 秒</div>
         <div class="turn-indicator" style="display: none;"></div>
     </div>
     <div id="game-board" class="grid"></div>
-    <button class="btn-back" onclick="resetGame()" style="padding: 8px 25px; margin-top: 10px;">放棄並返回</button>
+    <button class="btn-back" onclick="resetGame()" style="padding: 10px 30px; margin-top: 15px; font-size: 18px;">放棄並返回</button>
 </div>
 
 <!-- 勝利畫面 -->
@@ -154,7 +150,7 @@
 <div id="player-modal" class="modal">
     <div class="modal-content">
         <h3>📝 填寫玩家資料</h3>
-        <p style="color: #666; font-size:14px; margin-top:-10px;">此成績將會記錄到排行榜</p>
+        <p style="color: #666; font-size:14px; margin-top:-10px;">此成績將會精確記錄到排行榜</p>
         <select id="player-class">
             <option value="1A">1A 班</option><option value="1B">1B 班</option>
             <option value="1C">1C 班</option><option value="1D">1D 班</option>
@@ -175,7 +171,7 @@
         </div>
         <div class="modal-btn-group">
             <button class="btn-cancel" onclick="closeModal('rules-modal')">取消</button>
-            <button class="btn-hard" onclick="startSinglePlayerGame()">🚀 準備好了！開始</button>
+            <button class="btn-hard" onclick="startGameFromRules()">🚀 準備好了！開始</button>
         </div>
     </div>
 </div>
@@ -249,10 +245,11 @@
     const equipmentData = [ { id: 'funnel_filter', name: '漏斗連濾紙', image: 'images/漏斗連濾紙.png', drawing: 'images/漏斗連濾紙畫圖.png', hasDrawing: true }, { id: 'beaker', name: '燒杯', image: 'images/燒杯.png', drawing: 'images/燒杯畫圖.png', hasDrawing: true }, { id: 'dropping_bottle', name: '滴瓶', image: 'images/滴瓶.png', hasDrawing: false }, { id: 'watchglass', name: '錶面玻璃', image: 'images/錶面玻璃.png', drawing: 'images/錶面玻璃畫圖.png', hasDrawing: true }, { id: 'tongs', name: '鉗', image: 'images/鉗.png', hasDrawing: false }, { id: 'test_tube_rack', name: '試管架', image: 'images/試管架.png', hasDrawing: false }, { id: 'dropper', name: '滴管', image: 'images/滴管.png', drawing: 'images/滴管畫圖.png', hasDrawing: true }, { id: 'mat', name: '隔熱墊', image: 'images/隔熱墊.png', drawing: 'images/隔熱墊畫圖.png', hasDrawing: true }, { id: 'cylinder', name: '量筒', image: 'images/量筒.png', drawing: 'images/量筒畫圖.png', hasDrawing: true }, { id: 'tube', name: '試管', image: 'images/試管.png', drawing: 'images/試管畫圖.png', hasDrawing: true }, { id: 'reagent_bottle', name: '試劑瓶', image: 'images/試劑瓶.png', hasDrawing: false }, { id: 'spatula', name: '刮勺', image: 'images/刮勺.png', hasDrawing: false }, { id: 'filter_paper', name: '濾紙', image: 'images/濾紙.png', drawing: 'images/濾紙畫圖.png', hasDrawing: true }, { id: 'stand', name: '支架和夾', image: 'images/支架和夾.png', drawing: 'images/支架連夾畫圖.png', hasDrawing: true }, { id: 'wiregauze', name: '鐵絲網', image: 'images/鐵絲網.png', drawing: 'images/鐵絲網畫圖.png', hasDrawing: true }, { id: 'bunsen', name: '本生燈', image: 'images/本生燈.png', drawing: 'images/本生燈畫圖.png', hasDrawing: true }, { id: 'flask', name: '錐形燒瓶', image: 'images/錐形燒瓶和膠塞.png', drawing: 'images/錐形燒瓶畫圖.png', hasDrawing: true }, { id: 'gasjar', name: '集氣瓶', image: 'images/集氣瓶.png', drawing: 'images/集氣瓶畫圖.png', hasDrawing: true }, { id: 'evaporating', name: '蒸發皿', image: 'images/蒸發皿.png', drawing: 'images/蒸發皿畫圖.png', hasDrawing: true }, { id: 'test_tube_holder', name: '試管夾', image: 'images/試管夾.png', hasDrawing: false }, { id: 'funnel', name: '漏斗', image: 'images/漏斗.png', drawing: 'images/漏斗畫圖.png', hasDrawing: true }, { id: 'glassrod', name: '玻璃棒', image: 'images/玻璃棒.png', drawing: 'images/玻璃棒畫圖.png', hasDrawing: true }, { id: 'tripod', name: '三腳架', image: 'images/三腳架.png', drawing: 'images/三腳架畫圖.png', hasDrawing: true } ];
     
     let currentMode = ''; let cards = []; let flippedCards = []; let matchedSets = 0; let requiredMatches = 2; let totalSets = 8;
-    let timerInterval; let secondsElapsed = 0; 
+    let timerInterval; let startTime = 0; let secondsElapsed = "0.00"; 
     let playerClass = ''; let playerId = ''; 
     let viewClass = '1A'; let viewMode = 'hard';
     let twoPlayerState = { active: false, currentPlayer: 1, scores: { p1: 0, p2: 0 } };
+
     let selectedPracticeCard = null;
 
     // 初始化 Admin 學號下拉選單
@@ -263,7 +260,6 @@
         delIdSelect.appendChild(opt);
     }
 
-    // 將函數掛載到 window 以供 onclick 呼叫
     window.openPlayerModal = function(mode) {
         currentMode = mode;
         document.getElementById('player-modal').style.display = 'block';
@@ -281,6 +277,11 @@
         playerId = sId;
         
         closeModal('player-modal');
+        openRulesModal(currentMode);
+    };
+
+    window.openRulesModal = function(mode) {
+        currentMode = mode;
         setupRulesBox();
         document.getElementById('rules-modal').style.display = 'block';
     };
@@ -288,14 +289,16 @@
     function setupRulesBox() {
         const box = document.getElementById('rules-box-content');
         if (currentMode === 'hard') {
-            box.innerHTML = `<h4>🏆 困難模式規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張面朝下的卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱) 才算成功。</li><li>計時排名：您的時間將上傳至<b>雲端排行榜</b>！</li></ul>`;
+            box.innerHTML = `<h4>🏆 困難模式規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張面朝下的卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱) 才算成功。</li><li>計時排名：您的精確時間將上傳至<b>雲端排行榜</b>！</li></ul>`;
+        } else if (currentMode === 'two_player') {
+            box.innerHTML = `<h4>⚔️ 雙人對戰規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張面朝下的卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱)。</li><li>輪流機制：玩家 <b>輪流</b> 翻牌，成功得 1 分，失敗換人。</li><li>此模式純屬切磋，<b>不計入</b> 排行榜！</li></ul>`;
         } else {
             let typeText = currentMode === 'easy_name' ? '名稱' : '畫圖';
-            box.innerHTML = `<h4>⭐ 簡單模式 (${typeText}) 規則</h4><ul><li>觀察配對：共有 <b>8 組</b>儀器 (16 張卡牌)。</li><li>配對條件：全部卡牌將會<b>直接打開</b>，點選 <b>2 張相同</b> (實物+${typeText}) 即可配對。</li><li>計時排名：您的時間將上傳至<b>簡單專屬排行榜</b>！</li></ul>`;
+            box.innerHTML = `<h4>⭐ 簡單模式 (${typeText}) 規則</h4><ul><li>觀察配對：共有 <b>8 組</b>儀器 (16 張卡牌)。</li><li>配對條件：全部卡牌將會<b>直接打開</b>，點選 <b>2 張相同</b> (實物+${typeText}) 即可配對。</li><li>計時排名：您的精確時間將上傳至<b>簡單專屬排行榜</b>！</li></ul>`;
         }
     }
 
-    window.startSinglePlayerGame = function() {
+    window.startGameFromRules = function() {
         closeModal('rules-modal');
         startGame(currentMode);
     };
@@ -305,11 +308,13 @@
         if (mode.startsWith('easy')) { requiredMatches = 2; totalSets = 8; } 
         else if (mode === 'hard' || mode === 'two_player') { requiredMatches = 3; totalSets = 5; }
 
-        matchedSets = 0; secondsElapsed = 0; flippedCards = []; selectedPracticeCard = null;
+        matchedSets = 0; secondsElapsed = "0.00"; flippedCards = []; selectedPracticeCard = null;
         document.getElementById('time-display').innerText = secondsElapsed;
 
         document.getElementById('main-container').style.display = 'none'; 
         document.getElementById('game-screen').style.display = 'flex';
+        // 確保遊戲畫面在最上方
+        document.getElementById('game-screen').scrollTop = 0;
         
         const board = document.getElementById('game-board');
         board.className = `grid ${(mode.startsWith('easy') ? 'grid-16' : 'grid-15')}`;
@@ -353,20 +358,19 @@
             cardEl.classList.add('card'); cardEl.dataset.id = card.id;
             let backContent = card.type === 'name' ? `<div class="card-text">${card.content}</div>` : `<img src="${card.content}" alt="儀器">`;
             
-            cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
-            
             if (mode.startsWith('easy')) {
-                // 簡單模式：加上 flipped class，讓 CSS 的 -webkit-transform 穩定生效
+                // 簡單模式：直接正面朝上
                 cardEl.classList.add('practice-card', 'flipped');
+                cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
                 cardEl.addEventListener('click', function() { handleEasyClick(this); });
             } else {
+                cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
                 cardEl.addEventListener('click', function() { flipCard(this); });
             }
             board.appendChild(cardEl);
         });
     }
 
-    // 簡單模式點選邏輯
     window.handleEasyClick = function(cardEl) {
         if (cardEl.classList.contains('matched')) return;
         
@@ -391,7 +395,6 @@
         }
     };
 
-    // 困難模式翻牌邏輯
     window.flipCard = function(cardEl) {
         if (flippedCards.length >= requiredMatches || cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
         cardEl.classList.add('flipped');
@@ -415,7 +418,15 @@
         }, 1000);
     }
     
-    function startTimer() { document.querySelector('.timer').style.display = 'block'; clearInterval(timerInterval); timerInterval = setInterval(() => { document.getElementById('time-display').innerText = ++secondsElapsed; }, 1000); }
+    function startTimer() { 
+        document.querySelector('.timer').style.display = 'block'; 
+        clearInterval(timerInterval); 
+        startTime = Date.now();
+        timerInterval = setInterval(() => { 
+            secondsElapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            document.getElementById('time-display').innerText = secondsElapsed; 
+        }, 30); 
+    }
 
     async function endGame() {
         clearInterval(timerInterval);
@@ -443,10 +454,11 @@
         const scoreRef = doc(db, "labScores", docId);
         try {
             const docSnap = await getDoc(scoreRef);
-            if (!docSnap.exists() || docSnap.data().time > secondsElapsed) {
-                await setDoc(scoreRef, { class: playerClass, studentId: parseInt(playerId), time: secondsElapsed, difficulty: currentMode, timestamp: new Date() });
+            const newTime = parseFloat(secondsElapsed);
+            if (!docSnap.exists() || docSnap.data().time > newTime) {
+                await setDoc(scoreRef, { class: playerClass, studentId: parseInt(playerId), time: newTime, difficulty: currentMode, timestamp: new Date() });
             }
-        } catch (error) { console.error("儲存失敗:", error); alert("上傳失敗，請檢查網路連線！"); }
+        } catch (error) { console.error("儲存失敗:", error); alert("上傳失敗，請檢查網路！"); }
     }
 
     window.resetGame = function() { 
@@ -469,13 +481,13 @@
             const classQuery = query(collection(db, "labScores"), where("difficulty", "==", viewMode), where("class", "==", viewClass), orderBy("time", "asc"), limit(10));
             const classSnap = await getDocs(classQuery);
             const classTbody = document.querySelector('#class-board tbody'); classTbody.innerHTML = '';
-            classSnap.docs.forEach((doc, i) => { const d = doc.data(); classTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.studentId}</td><td>${d.time}</td></tr>`; });
+            classSnap.docs.forEach((doc, i) => { const d = doc.data(); classTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.studentId}</td><td>${Number(d.time).toFixed(2)}</td></tr>`; });
             if (classTbody.innerHTML === '') classTbody.innerHTML = '<tr><td colspan="3" style="padding:15px;">暫無成績</td></tr>';
             
             const formQuery = query(collection(db, "labScores"), where("difficulty", "==", viewMode), orderBy("time", "asc"), limit(20));
             const formSnap = await getDocs(formQuery);
             const formTbody = document.querySelector('#form-board tbody'); formTbody.innerHTML = '';
-            formSnap.docs.forEach((doc, i) => { const d = doc.data(); formTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.class}</td><td>${d.studentId}</td><td>${d.time}</td></tr>`; });
+            formSnap.docs.forEach((doc, i) => { const d = doc.data(); formTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.class}</td><td>${d.studentId}</td><td>${Number(d.time).toFixed(2)}</td></tr>`; });
             if (formTbody.innerHTML === '') formTbody.innerHTML = '<tr><td colspan="4" style="padding:15px;">暫無成績</td></tr>';
             
             document.getElementById('loading-msg').style.display = 'none'; document.getElementById('leaderboards-container').style.display = 'flex';
@@ -548,11 +560,8 @@
         setTimeout(() => { confetti.remove(); }, 5000);
     }
     const styleSheet = document.createElement("style");
-    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110vh; top: 110dvh; opacity: 1; transform: rotate(720deg); } }`;
+    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110dvh; opacity: 1; transform: rotate(720deg); } }`;
     document.head.appendChild(styleSheet);
-    
-    // 初始載入
-    fetchLeaderboards();
 </script>
 </body>
 </html>
