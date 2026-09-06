@@ -26,23 +26,31 @@
         
         #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; box-sizing: border-box;}
         
-        /* 針對 Safari 橫向與硬體加速優化 */
+        /* 網格與卡牌 */
         .grid { display: grid; gap: 8px; justify-content: center; align-items: center; margin: 5px auto; width: 95%; max-width: 850px; }
         .grid-16 { grid-template-columns: repeat(4, 1fr); }
         .grid-15 { grid-template-columns: repeat(5, 1fr); }
         
         .card { width: 100%; aspect-ratio: 4/3; max-height: 110px; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
+        
+        /* 困難模式翻牌特效 */
         .card.flipped .card-inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
+        
+        /* 配對成功隱藏 */
         .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); }
         
+        /* 簡單模式專用：點選高亮特效 */
+        .card.practice-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .card.practice-card.selected .card-inner { transform: rotateY(180deg) scale(1.08); box-shadow: 0 0 20px 5px rgba(33, 150, 243, 0.7); border-radius: 10px;}
+
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #bbb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-front { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; font-size: 32px; font-weight: bold; }
         .card-back { background-color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); padding: 5px; }
         .card-back img { max-width: 90%; max-height: 90%; object-fit: contain; pointer-events: none; }
         .card-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.2;}
         
-        /* 排行榜優化，解決卡頓 */
+        /* 排行榜優化 */
         .leaderboard-controls { margin: 10px 0; font-size: 15px; font-weight: bold; display: flex; justify-content: center; gap: 10px; align-items: center;}
         .leaderboards { display: flex; justify-content: space-around; gap: 15px; margin-top: 5px; flex: 1; min-height: 0;}
         .board { flex: 1; background: #fff9c4; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
@@ -53,17 +61,18 @@
         th { background-color: #fbc02d; color: #333; position: sticky; top: 0; z-index: 2;}
         .loading { font-size: 16px; color: #666; margin: 20px; }
         
-        #victory-screen { justify-content: center; background: rgba(255, 255, 255, 0.95); }
+        #victory-screen { justify-content: center; background: rgba(255, 255, 0.95); }
         #victory-screen h1 { font-size: 48px; margin-bottom: 20px; color: #f44336; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .confetti { position: fixed; width: 10px; height: 10px; top: -20px; opacity: 0; z-index: 9999; }
         
-        /* 彈窗(Modal)美化 */
+        /* 彈窗樣式 */
         .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .modal-content { background-color: #fff; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border: none; width: 85%; max-width: 420px; border-radius: 16px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
         .modal-content h3 { margin-top: 0; color: #333; font-size: 22px;}
         .modal-content input, .modal-content select { width: calc(100% - 20px); margin-bottom: 15px; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: #f9f9f9;}
         
+        /* 生動的規則框樣式 */
         .rules-box { background: #e3f2fd; border-left: 5px solid #2196F3; padding: 15px; text-align: left; border-radius: 8px; margin-bottom: 20px; }
         .rules-box h4 { color: #1976D2; margin-top: 0; margin-bottom: 10px; font-size: 18px;}
         .rules-box ul { padding-left: 20px; margin: 0; color: #444; font-size: 15px; line-height: 1.5;}
@@ -92,7 +101,6 @@
             <button class="btn-two" onclick="startGame('two_player')">雙人對戰 (不計分)</button>
         </div>
         
-        <!-- 排行榜區塊 -->
         <div class="leaderboard-controls">
             <span>🏆 排行榜：</span>
             <select id="leaderboard-mode-select">
@@ -113,16 +121,12 @@
                 <div class="table-container">
                     <table id="class-board"><thead><tr><th>排名</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
                 </div>
-            </div>
             <div class="board">
                 <h3>👑 全級排行榜</h3>
                 <div class="table-container">
                     <table id="form-board"><thead><tr><th>排名</th><th>班別</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
                 </div>
-            </div>
-        </div>
-        
-        <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
+            </div>        <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
     </div>
 </div>
 
@@ -216,10 +220,7 @@
             <button class="btn-cancel" onclick="closeModal('admin-dashboard-modal')">取消</button>
             <button class="btn-hard" onclick="executeDelete()">🗑️ 確認刪除</button>
         </div>
-    </div>
-</div>
-
-<script type="module">
+    </div><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, collection, query, where, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     
@@ -245,6 +246,7 @@
     let playerClass = ''; let playerId = ''; 
     let viewClass = '1A'; let viewMode = 'hard';
     let twoPlayerState = { active: false, currentPlayer: 1, scores: { p1: 0, p2: 0 } };
+    let selectedPracticeCard = null; // 簡單模式用的變數
 
     // 初始化 Admin 學號下拉選單
     const delIdSelect = document.getElementById('del-id');
@@ -254,11 +256,11 @@
         delIdSelect.appendChild(opt);
     }
 
-    // 將所有需要全域存取的函數掛載到 window
     window.openPlayerModal = function(mode) {
         currentMode = mode;
         document.getElementById('player-modal').style.display = 'block';
     };
+
     window.closeModal = function(id) {
         document.getElementById(id).style.display = 'none';
     };
@@ -278,10 +280,10 @@
     function setupRulesBox() {
         const box = document.getElementById('rules-box-content');
         if (currentMode === 'hard') {
-            box.innerHTML = `<h4>🏆 困難模式規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱) 才算成功。</li><li>計時排名：您的時間將上傳至<b>雲端排行榜</b>！</li></ul>`;
+            box.innerHTML = `<h4>🏆 困難模式規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張面朝下的卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱) 才算成功。</li><li>計時排名：您的時間將上傳至<b>雲端排行榜</b>！</li></ul>`;
         } else {
             let typeText = currentMode === 'easy_name' ? '名稱' : '畫圖';
-            box.innerHTML = `<h4>⭐ 簡單模式 (${typeText}) 規則</h4><ul><li>記憶考驗：共有 <b>8 組</b>儀器 (16 張卡牌)。</li><li>配對條件：一次翻開 <b>2 張相同</b> (實物+${typeText}) 即算成功。</li><li>計時排名：您的時間將上傳至<b>簡單專屬排行榜</b>！</li></ul>`;
+            box.innerHTML = `<h4>⭐ 簡單模式 (${typeText}) 規則</h4><ul><li>觀察配對：共有 <b>8 組</b>儀器 (16 張卡牌)。</li><li>配對條件：全部卡牌將會<b>直接打開</b>，點選 <b>2 張相同</b> (實物+${typeText}) 即可配對。</li><li>計時排名：您的時間將上傳至<b>簡單專屬排行榜</b>！</li></ul>`;
         }
     }
 
@@ -295,8 +297,9 @@
         if (mode.startsWith('easy')) { requiredMatches = 2; totalSets = 8; } 
         else if (mode === 'hard' || mode === 'two_player') { requiredMatches = 3; totalSets = 5; }
 
-        matchedSets = 0; secondsElapsed = 0; flippedCards = [];
+        matchedSets = 0; secondsElapsed = 0; flippedCards = []; selectedPracticeCard = null;
         document.getElementById('time-display').innerText = secondsElapsed;
+
         document.getElementById('main-container').style.display = 'none'; 
         document.getElementById('game-screen').style.display = 'flex';
         
@@ -341,12 +344,47 @@
             const cardEl = document.createElement('div');
             cardEl.classList.add('card'); cardEl.dataset.id = card.id;
             let backContent = card.type === 'name' ? `<div class="card-text">${card.content}</div>` : `<img src="${card.content}" alt="儀器">`;
-            cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
-            cardEl.addEventListener('click', function() { flipCard(this); });
+            
+            if (mode.startsWith('easy')) {
+                // 簡單模式：預設把牌翻到正面 (rotateY(180deg))，並加上 selected 特效邏輯
+                cardEl.classList.add('practice-card');
+                cardEl.innerHTML = `<div class="card-inner" style="transform: rotateY(180deg);"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
+                cardEl.addEventListener('click', function() { handleEasyClick(this); });
+            } else {
+                // 困難與雙人對戰：預設蓋著，需要手動翻開
+                cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
+                cardEl.addEventListener('click', function() { flipCard(this); });
+            }
             board.appendChild(cardEl);
         });
     }
 
+    // 簡單模式的點選邏輯 (全部打開)
+    function handleEasyClick(cardEl) {
+        if (cardEl.classList.contains('matched')) return;
+        
+        if (!selectedPracticeCard) { 
+            selectedPracticeCard = cardEl; 
+            cardEl.classList.add('selected'); 
+        } else {
+            if (selectedPracticeCard === cardEl) { 
+                selectedPracticeCard.classList.remove('selected'); 
+                selectedPracticeCard = null; 
+            } else if (selectedPracticeCard.dataset.id === cardEl.dataset.id) {
+                selectedPracticeCard.classList.add('matched'); 
+                cardEl.classList.add('matched');
+                selectedPracticeCard.classList.remove('selected');
+                cardEl.classList.remove('selected');
+                selectedPracticeCard = null;
+                if (++matchedSets === totalSets) endGame();
+            } else { 
+                selectedPracticeCard.classList.remove('selected'); 
+                selectedPracticeCard = null; 
+            }
+        }
+    }
+
+    // 困難模式的翻牌邏輯 (蓋著)
     function flipCard(cardEl) {
         if (flippedCards.length >= requiredMatches || cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
         cardEl.classList.add('flipped');
