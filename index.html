@@ -6,119 +6,123 @@
     <title>實驗儀器配對遊戲</title>
     <style>
         :root { --hue: 210; }
-        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100%; overflow: hidden; -webkit-user-select: none; user-select: none; }
-        h1 { color: #333; margin: 10px 0; font-size: 24px; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 10px; box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f8ff; text-align: center; height: 100dvh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+        h1 { color: #333; margin: 10px 0; font-size: 26px; font-weight: 800;}
+        .container { max-width: 1000px; margin: 0 auto; padding: 10px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column;}
         
         button, select, input { padding: 12px 15px; font-size: 16px; margin: 5px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; touch-action: manipulation; }
-        button { background-color: #4CAF50; color: white; border: none; font-weight: bold; transition: transform 0.1s ease; }
-        button:active { transform: scale(0.95); }
+        button { color: white; border: none; font-weight: bold; transition: transform 0.1s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        button:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
         
-        .btn-practice { background-color: #2196F3; }
-        .btn-challenge { background-color: #f44336; }
-        .btn-admin { background-color: #9e9e9e; font-size: 14px; padding: 8px 12px; margin-top: 10px; }
+        .btn-easy { background-color: #2196F3; }
+        .btn-hard { background-color: #f44336; }
+        .btn-two { background-color: #9c27b0; }
+        .btn-admin { background-color: #757575; font-size: 14px; padding: 8px 12px; margin-top: auto; margin-bottom: 10px; width: fit-content; align-self: center;}
         .btn-back { background-color: #4CAF50; }
         
-        .practice-options { display: none; margin-top: 10px; }
-        
-        .timer, .turn-indicator { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .timer, .turn-indicator { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
         .timer { color: #d32f2f; }
         .turn-indicator { color: #1976D2; }
         
-        #game-screen, #mode-select-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.95); z-index: 10; }
+        #game-screen, #victory-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100dvh; width: 100%; position: fixed; top: 0; left: 0; background: rgba(240, 248, 255, 0.98); z-index: 10; padding-top: 15px; box-sizing: border-box;}
         
-        .grid { display: grid; gap: 12px; justify-content: center; align-items: center; margin: 0 auto; }
+        /* 針對 Safari 橫向與硬體加速優化 */
+        .grid { display: grid; gap: 8px; justify-content: center; align-items: center; margin: 5px auto; width: 95%; max-width: 850px; }
         .grid-16 { grid-template-columns: repeat(4, 1fr); }
         .grid-15 { grid-template-columns: repeat(5, 1fr); }
         
-        .card { width: 18vw; max-width: 160px; height: 13vw; max-height: 120px; background-color: transparent; perspective: 1000px; cursor: pointer; }
-        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
+        .card { width: 100%; aspect-ratio: 4/3; max-height: 110px; background-color: transparent; perspective: 1000px; cursor: pointer; -webkit-transform: translateZ(0); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
         .card.flipped .card-inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
         .card.matched { visibility: hidden; transition: visibility 0.2s, transform 0.2s; transform: scale(0); }
         
-        .card.practice-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .card.practice-card.selected { transform: scale(1.08); box-shadow: 0 0 20px 5px hsla(var(--hue), 90%, 60%, 0.7); border-color: hsla(var(--hue), 90%, 60%, 1); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #bbb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card-front { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; font-size: 32px; font-weight: bold; }
+        .card-back { background-color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); padding: 5px; }
+        .card-back img { max-width: 90%; max-height: 90%; object-fit: contain; pointer-events: none; }
+        .card-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.2;}
         
-        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #bbb; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card-front { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; font-size: 36px; font-weight: bold; }
-        .card-back { background-color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); padding: 8px; }
-        .card-back img { max-width: 95%; max-height: 95%; object-fit: contain; pointer-events: none; }
-        .card-text { font-size: 18px; font-weight: bold; color: #333; }
+        /* 排行榜優化，解決卡頓 */
+        .leaderboard-controls { margin: 10px 0; font-size: 15px; font-weight: bold; display: flex; justify-content: center; gap: 10px; align-items: center;}
+        .leaderboards { display: flex; justify-content: space-around; gap: 15px; margin-top: 5px; flex: 1; min-height: 0;}
+        .board { flex: 1; background: #fff9c4; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .board h3 { margin: 0 0 10px 0; font-size: 16px; color: #d32f2f;}
+        .table-container { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; table-layout: fixed;}
+        th, td { border: 1px solid #ddd; padding: 5px; text-align: center; }
+        th { background-color: #fbc02d; color: #333; position: sticky; top: 0; z-index: 2;}
+        .loading { font-size: 16px; color: #666; margin: 20px; }
         
-        /* 排行榜區塊 */
-        .leaderboard-controls { margin-top: 15px; font-size: 16px; font-weight: bold; }
-        .leaderboards { display: flex; justify-content: space-around; gap: 15px; margin-top: 10px; }
-        .board { flex: 1; background: #fff9c4; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .board h3 { margin: 5px 0 10px 0; font-size: 18px; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 15px; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-        th { background-color: #fbc02d; color: #333; }
-        .loading { font-size: 18px; color: #666; margin: 20px; }
-        
-        /* Modal 通用樣式 */
-        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-        .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border: none; width: 85%; max-width: 450px; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out forwards; }
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .modal-content input, .modal-content select { width: 80%; margin-bottom: 15px; }
-        
-        /* 規則視窗專屬樣式 */
-        .rules-title { font-size: 24px; color: #f44336; margin-bottom: 15px; font-weight: bold; }
-        .rules-list { text-align: left; background: #fff3f3; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 16px; line-height: 1.6; color: #333; }
-        .rules-list p { margin: 8px 0; }
-        
-        #victory-screen h1 { font-size: 48px; margin-bottom: 20px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+        #victory-screen { justify-content: center; background: rgba(255, 255, 255, 0.95); }
+        #victory-screen h1 { font-size: 48px; margin-bottom: 20px; color: #f44336; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .confetti { position: fixed; width: 10px; height: 10px; top: -20px; opacity: 0; z-index: 9999; }
+        
+        /* 彈窗(Modal)美化 */
+        .modal { display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100dvh; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background-color: #fff; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border: none; width: 85%; max-width: 420px; border-radius: 16px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
+        .modal-content h3 { margin-top: 0; color: #333; font-size: 22px;}
+        .modal-content input, .modal-content select { width: calc(100% - 20px); margin-bottom: 15px; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: #f9f9f9;}
+        
+        .rules-box { background: #e3f2fd; border-left: 5px solid #2196F3; padding: 15px; text-align: left; border-radius: 8px; margin-bottom: 20px; }
+        .rules-box h4 { color: #1976D2; margin-top: 0; margin-bottom: 10px; font-size: 18px;}
+        .rules-box ul { padding-left: 20px; margin: 0; color: #444; font-size: 15px; line-height: 1.5;}
+        .rules-box li { margin-bottom: 6px; }
+        
+        .modal-btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .modal-btn-group button { flex: 1; margin: 0; padding: 12px; }
+        .btn-cancel { background-color: #9e9e9e !important; }
+        
+        /* 管理員介面特別樣式 */
+        .admin-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; text-align: left;}
+        .admin-row label { flex: 1; font-weight: bold; color: #555;}
+        .admin-row select { flex: 2; margin: 0; }
     </style>
 </head>
 <body>
 
 <div class="container" id="main-container">
-    <div id="setup-screen">
+    <div id="setup-screen" style="display: flex; flex-direction: column; height: 100%;">
         <h1>🔬 實驗儀器配對遊戲</h1>
         
-        <!-- 主選單按鈕區 -->
         <div class="controls">
-            <button class="btn-practice" id="btn-toggle-practice">進入練習模式</button>
-            <button class="btn-challenge" id="btn-challenge-select">進入挑戰模式</button>
-            
-            <!-- 練習模式選項 (預設隱藏) -->
-            <div class="practice-options" id="practice-options">
-                <button class="btn-practice" id="btn-practice-name">實物 + 名稱</button>
-                <button class="btn-practice" id="btn-practice-draw">實物 + 畫圖</button>
-                <button class="btn-back" id="btn-practice-back" style="margin-left: 10px;">返回主畫面</button>
-            </div>
+            <button class="btn-easy" onclick="openPlayerModal('easy_name')">單人簡單 (實物+名稱)</button>
+            <button class="btn-easy" onclick="openPlayerModal('easy_draw')">單人簡單 (實物+畫圖)</button>
+            <button class="btn-hard" onclick="openPlayerModal('hard')">單人困難 (三卡配對)</button>
+            <button class="btn-two" onclick="startGame('two_player')">雙人對戰 (不計分)</button>
         </div>
         
         <!-- 排行榜區塊 -->
         <div class="leaderboard-controls">
-            查看班級：
-            <select id="leaderboard-class-select" style="padding: 5px; font-size: 14px;">
-                <option value="1A">1A</option><option value="1B">1B</option>
-                <option value="1C">1C</option><option value="1D">1D</option>
+            <span>🏆 排行榜：</span>
+            <select id="leaderboard-mode-select">
+                <option value="hard">困難 (三卡)</option>
+                <option value="easy_name">簡單 (實物+名稱)</option>
+                <option value="easy_draw">簡單 (實物+畫圖)</option>
+            </select>
+            <select id="leaderboard-class-select">
+                <option value="1A">1A班</option><option value="1B">1B班</option>
+                <option value="1C">1C班</option><option value="1D">1D班</option>
             </select>
         </div>
         <div id="loading-msg" class="loading">正在載入排行榜資料...</div>
+        
         <div class="leaderboards" id="leaderboards-container" style="display: none;">
             <div class="board">
-                <h3 id="class-board-title">🏆 1A班 排行榜 (困難)</h3>
-                <table id="class-board"><thead><tr><th>排名</th><th>學號</th><th>時間(秒)</th></tr></thead><tbody></tbody></table>
+                <h3 id="class-board-title">本班排行榜</h3>
+                <div class="table-container">
+                    <table id="class-board"><thead><tr><th>排名</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
+                </div>
             </div>
             <div class="board">
-                <h3>👑 全級 排行榜 (困難)</h3>
-                <table id="form-board"><thead><tr><th>排名</th><th>班別</th><th>學號</th><th>時間(秒)</th></tr></thead><tbody></tbody></table>
+                <h3>👑 全級排行榜</h3>
+                <div class="table-container">
+                    <table id="form-board"><thead><tr><th>排名</th><th>班別</th><th>學號</th><th>時間(s)</th></tr></thead><tbody></tbody></table>
+                </div>
             </div>
         </div>
-        <button class="btn-admin" id="btn-admin">管理員: 刪除紀錄</button>
-    </div>
-    
-    <!-- 挑戰模式選擇畫面 -->
-    <div id="mode-select-screen">
-        <h1>選擇挑戰模式</h1>
-        <div class="controls">
-            <button class="btn-challenge" id="btn-single-player">單人挑戰 (計排行榜成績)</button>
-            <button class="btn-challenge" id="btn-two-player">雙人對戰 (不計分)</button>
-        </div>
-        <button class="btn-back" id="btn-back-to-main" style="margin-top: 20px;">返回主畫面</button>
+        
+        <button class="btn-admin" onclick="openAdminPassword()">⚙️ 管理員後台</button>
     </div>
 </div>
 
@@ -128,54 +132,90 @@
         <div class="timer">時間: <span id="time-display">0</span> 秒</div>
         <div class="turn-indicator" style="display: none;"></div>
     </div>
-    <div id="game-board" class="grid"></div><br>
-    <button class="btn-back" id="btn-reset" style="padding: 10px 30px; font-size: 18px; margin-top: 15px;">放棄並返回</button>
+    <div id="game-board" class="grid"></div>
+    <button class="btn-back" onclick="resetGame()" style="padding: 8px 25px; margin-top: 10px;">放棄並返回</button>
 </div>
 
 <!-- 勝利畫面 -->
 <div id="victory-screen">
     <h1 id="victory-text"></h1>
-    <button class="btn-back" id="btn-victory-home" style="font-size: 20px; padding: 15px 30px;">返回主選單</button>
+    <button class="btn-back" onclick="resetGame()" style="font-size: 20px; padding: 15px 30px;">返回主選單</button>
 </div>
 
-<!-- 1. 玩家資訊輸入彈窗 (僅限單人挑戰) -->
-<div id="player-info-modal" class="modal">
+<!-- 1. 玩家資料輸入彈窗 -->
+<div id="player-modal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #333; margin-top:0;">📝 填寫玩家資料</h2>
-        <p style="color: #666; font-size:14px;">此模式的成績將會記錄到排行榜</p>
-        <select id="modal-class-select">
+        <h3>📝 填寫玩家資料</h3>
+        <p style="color: #666; font-size:14px; margin-top:-10px;">此成績將會記錄到排行榜</p>
+        <select id="player-class">
             <option value="1A">1A 班</option><option value="1B">1B 班</option>
             <option value="1C">1C 班</option><option value="1D">1D 班</option>
         </select>
-        <input type="number" id="modal-student-id" min="1" max="40" placeholder="請輸入學號 (1-40)">
-        <br>
-        <button id="btn-player-info-next" class="btn-challenge" style="width: 40%;">下一步</button>
-        <button id="btn-player-info-cancel" class="btn-back" style="width: 40%;">取消</button>
-    </div>
-</div>
-
-<!-- 2. 生動的規則彈窗 (僅限單人挑戰) -->
-<div id="rules-modal" class="modal">
-    <div class="modal-content">
-        <div class="rules-title">🏆 困難模式挑戰 🏆</div>
-        <div class="rules-list">
-            <p>⏱️ <b>計時挑戰：</b> 您的完成時間將被記錄至全級排行榜！</p>
-            <p>🧠 <b>記憶考驗：</b> 共有 5 組儀器，總計 15 張卡牌。</p>
-            <p>🔗 <b>三卡配對：</b> 一次必須翻開 <b>3張</b> 相同的卡牌才能得分：<br>👉 <b>實物圖 + 畫圖 + 儀器名稱</b></p>
+        <input type="number" id="player-id" min="1" max="40" placeholder="請輸入學號 (1-40)">
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal('player-modal')">取消</button>
+            <button class="btn-easy" onclick="proceedToRules()">下一步</button>
         </div>
-        <button id="btn-rules-start" class="btn-challenge" style="font-size: 18px; padding: 12px 30px;">🚀 開始挑戰！</button>
-        <button id="btn-rules-cancel" class="btn-back" style="font-size: 18px; padding: 12px 30px;">❌ 返回</button>
     </div>
 </div>
 
-<!-- 3. 管理員密碼輸入彈窗 -->
+<!-- 2. 生動的規則說明彈窗 -->
+<div id="rules-modal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div class="rules-box" id="rules-box-content">
+            <!-- 內容由 JS 動態生成 -->
+        </div>
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal('rules-modal')">取消</button>
+            <button class="btn-hard" onclick="startSinglePlayerGame()">🚀 準備好了！開始</button>
+        </div>
+    </div>
+</div>
+
+<!-- 3. 管理員密碼彈窗 -->
 <div id="password-modal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0;">🔒 管理員驗證</h3>
-        <input type="password" id="password-input" placeholder="••••••">
-        <br>
-        <button id="password-submit" class="btn-challenge">確認</button>
-        <button id="password-cancel" class="btn-back">取消</button>
+        <h3>🔒 驗證管理員身分</h3>
+        <input type="password" id="password-input" placeholder="請輸入密碼">
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal('password-modal')">取消</button>
+            <button class="btn-hard" onclick="verifyPassword()">確認</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. 管理員控制台彈窗 -->
+<div id="admin-dashboard-modal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>⚙️ 成績刪除控制台</h3>
+        <div class="admin-row">
+            <label>選擇模式：</label>
+            <select id="del-mode">
+                <option value="ALL">全部模式</option>
+                <option value="hard">困難 (三卡)</option>
+                <option value="easy_name">簡單 (實物+名稱)</option>
+                <option value="easy_draw">簡單 (實物+畫圖)</option>
+            </select>
+        </div>
+        <div class="admin-row">
+            <label>選擇班別：</label>
+            <select id="del-class">
+                <option value="ALL">全級 (所有班)</option>
+                <option value="1A">1A 班</option><option value="1B">1B 班</option>
+                <option value="1C">1C 班</option><option value="1D">1D 班</option>
+            </select>
+        </div>
+        <div class="admin-row">
+            <label>選擇學號：</label>
+            <select id="del-id">
+                <option value="ALL">全班所有人</option>
+                <!-- JS 動態生成 1-40 -->
+            </select>
+        </div>
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal('admin-dashboard-modal')">取消</button>
+            <button class="btn-hard" onclick="executeDelete()">🗑️ 確認刪除</button>
+        </div>
     </div>
 </div>
 
@@ -195,7 +235,6 @@
     appId: "1:154423337339:web:b377e9ccf1d266ed151dde"
   };
 
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
@@ -203,122 +242,95 @@
     
     let currentMode = ''; let cards = []; let flippedCards = []; let matchedSets = 0; let requiredMatches = 2; let totalSets = 8;
     let timerInterval; let secondsElapsed = 0; 
-    let playerClass = '1A'; let playerId = ''; // 儲存單人模式的玩家資料
-    let viewClass = '1A'; // 儲存排行榜當前查看的班級
-    
-    let selectedPracticeCard = null; let twoPlayerState = { active: false, currentPlayer: 1, scores: { p1: 0, p2: 0 } };
+    let playerClass = ''; let playerId = ''; 
+    let viewClass = '1A'; let viewMode = 'hard';
+    let twoPlayerState = { active: false, currentPlayer: 1, scores: { p1: 0, p2: 0 } };
 
-    // --- 主選單與練習模式切換 ---
-    document.getElementById('btn-toggle-practice').addEventListener('click', () => { 
-        document.getElementById('btn-toggle-practice').style.display = 'none';
-        document.getElementById('btn-challenge-select').style.display = 'none';
-        document.getElementById('practice-options').style.display = 'block'; 
-    });
-    document.getElementById('btn-practice-back').addEventListener('click', () => { 
-        document.getElementById('btn-toggle-practice').style.display = 'inline-block';
-        document.getElementById('btn-challenge-select').style.display = 'inline-block';
-        document.getElementById('practice-options').style.display = 'none'; 
-    });
-    
-    // --- 按鈕綁定 ---
-    document.getElementById('btn-practice-name').addEventListener('click', () => startGame('practice_name'));
-    document.getElementById('btn-practice-draw').addEventListener('click', () => startGame('practice_draw'));
-    document.getElementById('btn-challenge-select').addEventListener('click', showModeSelectScreen);
-    document.getElementById('btn-back-to-main').addEventListener('click', showMainScreen);
-    document.getElementById('btn-reset').addEventListener('click', resetGame);
-    document.getElementById('btn-victory-home').addEventListener('click', resetGame);
+    // 初始化 Admin 學號下拉選單
+    const delIdSelect = document.getElementById('del-id');
+    for (let i = 1; i <= 40; i++) {
+        let opt = document.createElement('option');
+        opt.value = i; opt.innerHTML = i + ' 號';
+        delIdSelect.appendChild(opt);
+    }
 
-    // --- 排行榜班級切換 ---
-    document.getElementById('leaderboard-class-select').addEventListener('change', (e) => { 
-        viewClass = e.target.value; 
-        fetchLeaderboards(); 
-    });
-
-    // --- 單人挑戰流程 (彈出輸入框 -> 規則框 -> 開始) ---
-    document.getElementById('btn-single-player').addEventListener('click', () => {
-        document.getElementById('player-info-modal').style.display = 'block';
-    });
+    // 將所有需要全域存取的函數掛載到 window
+    window.openPlayerModal = function(mode) {
+        currentMode = mode;
+        document.getElementById('player-modal').style.display = 'block';
+    };
+    window.closeModal = function(id) {
+        document.getElementById(id).style.display = 'none';
+    };
     
-    document.getElementById('btn-player-info-cancel').addEventListener('click', () => {
-        document.getElementById('player-info-modal').style.display = 'none';
-    });
-    
-    document.getElementById('btn-player-info-next').addEventListener('click', () => {
-        const sId = document.getElementById('modal-student-id').value;
+    window.proceedToRules = function() {
+        const sId = document.getElementById('player-id').value;
         if (!sId || sId < 1 || sId > 40) { alert('請輸入正確的學號 (1-40)！'); return; }
         
-        playerClass = document.getElementById('modal-class-select').value;
+        playerClass = document.getElementById('player-class').value;
         playerId = sId;
         
-        document.getElementById('player-info-modal').style.display = 'none';
+        closeModal('player-modal');
+        setupRulesBox();
         document.getElementById('rules-modal').style.display = 'block';
-    });
-    
-    document.getElementById('btn-rules-cancel').addEventListener('click', () => {
-        document.getElementById('rules-modal').style.display = 'none';
-    });
-    
-    document.getElementById('btn-rules-start').addEventListener('click', () => {
-        document.getElementById('rules-modal').style.display = 'none';
-        startGame('hard');
-    });
+    };
 
-    // --- 雙人對戰流程 ---
-    document.getElementById('btn-two-player').addEventListener('click', () => startGame('two_player'));
+    function setupRulesBox() {
+        const box = document.getElementById('rules-box-content');
+        if (currentMode === 'hard') {
+            box.innerHTML = `<h4>🏆 困難模式規則</h4><ul><li>記憶考驗：共有 <b>5 組</b>儀器 (15 張卡牌)。</li><li>配對條件：一次必須翻開 <b>3 張相同</b> (實物+畫圖+名稱) 才算成功。</li><li>計時排名：您的時間將上傳至<b>雲端排行榜</b>！</li></ul>`;
+        } else {
+            let typeText = currentMode === 'easy_name' ? '名稱' : '畫圖';
+            box.innerHTML = `<h4>⭐ 簡單模式 (${typeText}) 規則</h4><ul><li>記憶考驗：共有 <b>8 組</b>儀器 (16 張卡牌)。</li><li>配對條件：一次翻開 <b>2 張相同</b> (實物+${typeText}) 即算成功。</li><li>計時排名：您的時間將上傳至<b>簡單專屬排行榜</b>！</li></ul>`;
+        }
+    }
 
-    // --- 管理員面板 ---
-    document.getElementById('btn-admin').addEventListener('click', () => { 
-        document.getElementById('password-modal').style.display = 'block'; 
-        document.getElementById('password-input').focus(); 
-    });
-    document.getElementById('password-cancel').addEventListener('click', () => { 
-        document.getElementById('password-modal').style.display = 'none'; 
-        document.getElementById('password-input').value = '';
-    });
-    document.getElementById('password-submit').addEventListener('click', handlePasswordSubmit);
+    window.startSinglePlayerGame = function() {
+        closeModal('rules-modal');
+        startGame(currentMode);
+    };
 
-    // 啟動時先載入一次排行榜
-    fetchLeaderboards();
-
-    // --- 視窗切換函數 ---
-    function showModeSelectScreen() { document.getElementById('setup-screen').style.display = 'none'; document.getElementById('mode-select-screen').style.display = 'flex'; }
-    function showMainScreen() { document.getElementById('mode-select-screen').style.display = 'none'; document.getElementById('setup-screen').style.display = 'block'; }
-    
-    // --- 遊戲核心 ---
-    function startGame(mode) {
+    window.startGame = function(mode) {
         currentMode = mode;
-        if (mode.startsWith('practice')) { requiredMatches = 2; totalSets = 8; } 
+        if (mode.startsWith('easy')) { requiredMatches = 2; totalSets = 8; } 
         else if (mode === 'hard' || mode === 'two_player') { requiredMatches = 3; totalSets = 5; }
 
-        matchedSets = 0; secondsElapsed = 0; flippedCards = []; selectedPracticeCard = null;
+        matchedSets = 0; secondsElapsed = 0; flippedCards = [];
         document.getElementById('time-display').innerText = secondsElapsed;
         document.getElementById('main-container').style.display = 'none'; 
         document.getElementById('game-screen').style.display = 'flex';
         
         const board = document.getElementById('game-board');
-        board.className = `grid ${(mode.startsWith('practice') ? 'grid-16' : 'grid-15')}`;
+        board.className = `grid ${(mode.startsWith('easy') ? 'grid-16' : 'grid-15')}`;
         board.innerHTML = '';
         
         twoPlayerState.active = mode === 'two_player';
-        if (twoPlayerState.active) setupTwoPlayerGame(); else document.querySelector('.turn-indicator').style.display = 'none';
+        if (twoPlayerState.active) {
+            twoPlayerState.scores = { p1: 0, p2: 0 }; twoPlayerState.currentPlayer = 1; updateTurnIndicator();
+        } else {
+            document.querySelector('.turn-indicator').style.display = 'none';
+        }
         
         generateCards(mode, board);
-        if (!mode.startsWith('practice')) startTimer(); else document.querySelector('.timer').style.display = 'none';
+        startTimer();
     }
     
-    function setupTwoPlayerGame() { twoPlayerState.scores = { p1: 0, p2: 0 }; twoPlayerState.currentPlayer = 1; updateTurnIndicator(); }
-    function updateTurnIndicator() { const indicator = document.querySelector('.turn-indicator'); indicator.style.display = 'block'; indicator.textContent = `P${twoPlayerState.currentPlayer} 回合 (P1: ${twoPlayerState.scores.p1} | P2: ${twoPlayerState.scores.p2})`; }
+    function updateTurnIndicator() { 
+        const indicator = document.querySelector('.turn-indicator'); 
+        indicator.style.display = 'block'; 
+        indicator.textContent = `P${twoPlayerState.currentPlayer} 回合 (P1: ${twoPlayerState.scores.p1} | P2: ${twoPlayerState.scores.p2})`; 
+    }
 
     function generateCards(mode, board) {
-        let pool = (mode === 'practice_draw' || mode === 'hard' || mode === 'two_player') ? equipmentData.filter(item => item.hasDrawing) : equipmentData;
+        let pool = (mode === 'easy_draw' || mode === 'hard' || mode === 'two_player') ? equipmentData.filter(item => item.hasDrawing) : equipmentData;
         let shuffledData = [...pool].sort(() => 0.5 - Math.random()).slice(0, totalSets);
         cards = [];
 
         shuffledData.forEach(item => {
             cards.push({ id: item.id, type: 'image', content: item.image });
-            if (mode === 'practice_name') cards.push({ id: item.id, type: 'name', content: item.name });
-            else if (mode === 'practice_draw') cards.push({ id: item.id, type: 'drawing', content: item.drawing });
-            else if (mode === 'hard' || mode === 'two_player') {
+            if (mode === 'easy_name') cards.push({ id: item.id, type: 'name', content: item.name });
+            else if (mode === 'easy_draw') cards.push({ id: item.id, type: 'drawing', content: item.drawing });
+            else {
                 cards.push({ id: item.id, type: 'name', content: item.name });
                 cards.push({ id: item.id, type: 'drawing', content: item.drawing });
             }
@@ -328,31 +340,11 @@
         cards.forEach((card) => {
             const cardEl = document.createElement('div');
             cardEl.classList.add('card'); cardEl.dataset.id = card.id;
-            let backContent = card.type === 'name' ? `<div class="card-text">${card.content}</div>` : `<img src="${card.content}" alt="儀器圖片">`;
-            
-            if (mode.startsWith('practice')) {
-                cardEl.classList.add('practice-card');
-                cardEl.innerHTML = `<div class="card-inner" style="transform: rotateY(180deg);"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
-                cardEl.addEventListener('click', function() { handlePracticeClick(this); });
-            } else {
-                cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
-                cardEl.addEventListener('click', function() { flipCard(this); });
-            }
+            let backContent = card.type === 'name' ? `<div class="card-text">${card.content}</div>` : `<img src="${card.content}" alt="儀器">`;
+            cardEl.innerHTML = `<div class="card-inner"><div class="card-front">?</div><div class="card-back">${backContent}</div></div>`;
+            cardEl.addEventListener('click', function() { flipCard(this); });
             board.appendChild(cardEl);
         });
-    }
-
-    function handlePracticeClick(cardEl) {
-        if (cardEl.classList.contains('matched')) return;
-        if (!selectedPracticeCard) { selectedPracticeCard = cardEl; cardEl.classList.add('selected'); } 
-        else {
-            if (selectedPracticeCard === cardEl) { selectedPracticeCard.classList.remove('selected'); selectedPracticeCard = null; } 
-            else if (selectedPracticeCard.dataset.id === cardEl.dataset.id) {
-                selectedPracticeCard.classList.add('matched'); cardEl.classList.add('matched');
-                selectedPracticeCard = null;
-                if (++matchedSets === totalSets) endGame();
-            } else { selectedPracticeCard.classList.remove('selected'); selectedPracticeCard = null; }
-        }
     }
 
     function flipCard(cardEl) {
@@ -375,128 +367,130 @@
             }
             flippedCards = [];
             if (twoPlayerState.active) updateTurnIndicator();
-        }, 1200);
+        }, 1000);
     }
     
     function startTimer() { document.querySelector('.timer').style.display = 'block'; clearInterval(timerInterval); timerInterval = setInterval(() => { document.getElementById('time-display').innerText = ++secondsElapsed; }, 1000); }
 
     async function endGame() {
         clearInterval(timerInterval);
-        if (currentMode === 'hard') {
-            alert(`恭喜完成挑戰！您的時間是 ${secondsElapsed} 秒。正在上傳成績...`);
+        if (currentMode !== 'two_player') {
+            alert(`恭喜完成！您的時間是 ${secondsElapsed} 秒。\n正在為您上傳成績...`);
             await saveScoreToFirebase();
             resetGame();
-        } else if (currentMode.startsWith('practice')) {
-            alert(`練習完成！`);
-            resetGame();
-        } else if (currentMode === 'two_player') {
+        } else {
             const { p1, p2 } = twoPlayerState.scores;
             const winner = p1 > p2 ? 'P1' : (p2 > p1 ? 'P2' : '平手');
             const victoryText = winner === '平手' ? '平手了！' : `恭喜 ${winner} 獲勝！`;
-            showVictoryScreen(`${victoryText}<br><span style="font-size: 24px;">P1: ${p1}分 | P2: ${p2}分</span>`, winner !== '平手');
+            showVictoryScreen(`${victoryText}<br><span style="font-size: 24px; color:#333;">P1: ${p1}分 | P2: ${p2}分</span>`, winner !== '平手');
         }
     }
     
     function showVictoryScreen(text, celebrate) {
         document.getElementById('game-screen').style.display = 'none';
-        const victoryScreen = document.getElementById('victory-screen');
         document.getElementById('victory-text').innerHTML = text;
-        victoryScreen.style.display = 'flex';
+        document.getElementById('victory-screen').style.display = 'flex';
         if (celebrate) launchConfetti();
     }
 
     async function saveScoreToFirebase() {
-        if (currentMode !== 'hard') return;
-        const docId = `${playerClass}_${playerId}_hard`;
+        const docId = `${playerClass}_${playerId}_${currentMode}`;
         const scoreRef = doc(db, "labScores", docId);
         try {
             const docSnap = await getDoc(scoreRef);
             if (!docSnap.exists() || docSnap.data().time > secondsElapsed) {
-                await setDoc(scoreRef, { class: playerClass, studentId: parseInt(playerId), time: secondsElapsed, difficulty: 'hard', timestamp: new Date() });
+                await setDoc(scoreRef, { class: playerClass, studentId: parseInt(playerId), time: secondsElapsed, difficulty: currentMode, timestamp: new Date() });
             }
-        } catch (error) { console.error("儲存成績失敗:", error); alert("成績上傳失敗! 請確保您的網路正常。"); }
+        } catch (error) { console.error("儲存失敗:", error); alert("上傳失敗，請檢查網路！"); }
     }
 
-    function resetGame() { 
+    window.resetGame = function() { 
         clearInterval(timerInterval); 
-        document.getElementById('main-container').style.display = 'block'; 
+        document.getElementById('main-container').style.display = 'flex'; 
         document.getElementById('game-screen').style.display = 'none'; 
         document.getElementById('victory-screen').style.display = 'none'; 
-        
-        // 恢復練習按鈕的狀態
-        document.getElementById('btn-toggle-practice').style.display = 'inline-block';
-        document.getElementById('btn-challenge-select').style.display = 'inline-block';
-        document.getElementById('practice-options').style.display = 'none'; 
-
-        showMainScreen(); 
         fetchLeaderboards(); 
-    }
+    };
     
+    // --- 排行榜處理 ---
+    document.getElementById('leaderboard-class-select').addEventListener('change', (e) => { viewClass = e.target.value; fetchLeaderboards(); });
+    document.getElementById('leaderboard-mode-select').addEventListener('change', (e) => { viewMode = e.target.value; fetchLeaderboards(); });
+
     async function fetchLeaderboards() {
         document.getElementById('loading-msg').style.display = 'block'; document.getElementById('leaderboards-container').style.display = 'none';
-        document.getElementById('class-board-title').innerText = `🏆 ${viewClass}班 排行榜 (困難)`;
+        let modeName = viewMode === 'hard' ? '困難' : (viewMode === 'easy_name' ? '簡單(名稱)' : '簡單(畫圖)');
+        document.getElementById('class-board-title').innerText = `🏆 ${viewClass}班 排行榜 (${modeName})`;
         try {
-            const classQuery = query(collection(db, "labScores"), where("difficulty", "==", "hard"), where("class", "==", viewClass), orderBy("time", "asc"), limit(10));
+            const classQuery = query(collection(db, "labScores"), where("difficulty", "==", viewMode), where("class", "==", viewClass), orderBy("time", "asc"), limit(10));
             const classSnap = await getDocs(classQuery);
             const classTbody = document.querySelector('#class-board tbody'); classTbody.innerHTML = '';
             classSnap.docs.forEach((doc, i) => { const d = doc.data(); classTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.studentId}</td><td>${d.time}</td></tr>`; });
-            if (classTbody.innerHTML === '') classTbody.innerHTML = '<tr><td colspan="3">暫無成績</td></tr>';
+            if (classTbody.innerHTML === '') classTbody.innerHTML = '<tr><td colspan="3" style="padding:15px;">暫無成績</td></tr>';
             
-            const formQuery = query(collection(db, "labScores"), where("difficulty", "==", "hard"), orderBy("time", "asc"), limit(20));
+            const formQuery = query(collection(db, "labScores"), where("difficulty", "==", viewMode), orderBy("time", "asc"), limit(20));
             const formSnap = await getDocs(formQuery);
             const formTbody = document.querySelector('#form-board tbody'); formTbody.innerHTML = '';
             formSnap.docs.forEach((doc, i) => { const d = doc.data(); formTbody.innerHTML += `<tr><td>${i+1}</td><td>${d.class}</td><td>${d.studentId}</td><td>${d.time}</td></tr>`; });
-            if (formTbody.innerHTML === '') formTbody.innerHTML = '<tr><td colspan="4">暫無成績</td></tr>';
+            if (formTbody.innerHTML === '') formTbody.innerHTML = '<tr><td colspan="4" style="padding:15px;">暫無成績</td></tr>';
             
             document.getElementById('loading-msg').style.display = 'none'; document.getElementById('leaderboards-container').style.display = 'flex';
-        } catch (error) { console.error("讀取排行榜失敗:", error); document.getElementById('loading-msg').innerText = "讀取排行榜失敗，請檢查Firebase索引。"; }
+        } catch (error) { 
+            console.error("讀取排行榜失敗:", error); 
+            document.getElementById('loading-msg').innerText = "需要建立新索引 (請在F12主控台點擊錯誤中的紅色網址建立)"; 
+        }
     }
     
-    function handlePasswordSubmit() {
-        const password = document.getElementById('password-input').value;
-        if (password === '123321') {
-            document.getElementById('password-modal').style.display = 'none';
+    // --- 管理員面板 ---
+    window.openAdminPassword = function() {
+        document.getElementById('password-modal').style.display = 'block';
+        document.getElementById('password-input').focus();
+    };
+    
+    window.verifyPassword = function() {
+        const pwd = document.getElementById('password-input').value;
+        if (pwd === '123321') {
+            closeModal('password-modal');
             document.getElementById('password-input').value = '';
-            showAdminDeletePrompt();
+            document.getElementById('admin-dashboard-modal').style.display = 'block';
         } else {
             alert('密碼錯誤！');
         }
-    }
-    
-    async function showAdminDeletePrompt() {
-        const toDelete = prompt("請輸入要刪除的紀錄：\n- 格式: 班別-學號 (例: 1A-25)\n- 格式: 班別-ALL (例: 1A-ALL)\n- 輸入 ALL 刪除所有紀錄");
-        if (!toDelete) return;
+    };
 
-        const [classPart, idPart] = toDelete.toUpperCase().split('-');
-
-        if (classPart === 'ALL' && !idPart) {
-            if (confirm("⚠️ 警告：您確定要刪除「所有班級」的所有困難模式成績嗎？此操作無法復原！")) {
-                alert("正在刪除所有紀錄，請稍候...");
-                const q = query(collection(db, "labScores"), where("difficulty", "==", "hard"));
-                const querySnapshot = await getDocs(q);
-                const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
-                await Promise.all(deletePromises); alert("所有困難模式成績已刪除！");
+    window.executeDelete = async function() {
+        const delMode = document.getElementById('del-mode').value;
+        const delClass = document.getElementById('del-class').value;
+        const delId = document.getElementById('del-id').value;
+        
+        let confirmMsg = `⚠️ 警告：您即將刪除\n模式: ${delMode}\n班別: ${delClass}\n學號: ${delId}\n\n確定執行嗎？(無法復原)`;
+        if (!confirm(confirmMsg)) return;
+        
+        alert("正在執行刪除，請稍候...");
+        try {
+            let constraints = [];
+            if (delMode !== 'ALL') constraints.push(where("difficulty", "==", delMode));
+            if (delClass !== 'ALL') constraints.push(where("class", "==", delClass));
+            if (delId !== 'ALL') constraints.push(where("studentId", "==", parseInt(delId)));
+            
+            const q = query(collection(db, "labScores"), ...constraints);
+            const querySnapshot = await getDocs(q);
+            
+            if (querySnapshot.empty) {
+                alert("找不到符合條件的紀錄！");
+                return;
             }
-        } else if (idPart === 'ALL') {
-             if (confirm(`⚠️ 警告：您確定要刪除 ${classPart} 班的所有困難模式成績嗎？`)) {
-                alert(`正在刪除 ${classPart} 班的所有紀錄，請稍候...`);
-                const q = query(collection(db, "labScores"), where("class", "==", classPart), where("difficulty", "==", "hard"));
-                const querySnapshot = await getDocs(q);
-                const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
-                await Promise.all(deletePromises); alert(`${classPart} 班的所有成績已刪除！`);
-            }
-        } else if (classPart && idPart) {
-            if (confirm(`您確定要刪除 ${classPart} 班 ${idPart} 號的困難模式成績嗎？`)) {
-                const docId = `${classPart}_${idPart}_hard`;
-                const docRef = doc(db, "labScores", docId);
-                try { await deleteDoc(docRef); alert(`${classPart} 班 ${idPart} 號的紀錄已成功刪除！`); } catch (e) { alert("刪除失敗：" + e); }
-            }
-        } else {
-            alert("輸入格式錯誤，請重新操作。");
+            
+            const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
+            await Promise.all(deletePromises); 
+            alert(`✅ 成功刪除了 ${deletePromises.length} 筆紀錄！`);
+            closeModal('admin-dashboard-modal');
+            fetchLeaderboards();
+        } catch(e) {
+            alert("刪除時發生錯誤：" + e);
         }
-        fetchLeaderboards();
-    }
+    };
     
+    // 特效
     function launchConfetti() { for (let i = 0; i < 150; i++) { createConfetti(); } }
     function createConfetti() {
         const confetti = document.createElement('div');
@@ -509,8 +503,11 @@
         setTimeout(() => { confetti.remove(); }, 5000);
     }
     const styleSheet = document.createElement("style");
-    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110vh; opacity: 1; transform: rotate(720deg); } }`;
+    styleSheet.innerText = `@keyframes fall { 0% { top: -20px; opacity: 1; transform: rotate(0deg); } 100% { top: 110dvh; opacity: 1; transform: rotate(720deg); } }`;
     document.head.appendChild(styleSheet);
+    
+    // 初始載入
+    fetchLeaderboards();
 </script>
 </body>
 </html>
