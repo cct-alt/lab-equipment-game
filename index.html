@@ -492,7 +492,7 @@
                     c1.classList.add('matched');
                     c2.classList.add('matched');
                     if (++matchedSets === totalSets) endGame();
-                }, 600); // 配合動畫 0.6 秒
+                }, 1500); // 配合動畫 0.6 秒
                 
                 selectedPracticeCard = null;
             } else { 
@@ -507,7 +507,7 @@
                 setTimeout(() => {
                     c1.classList.remove('mismatch-anim');
                     c2.classList.remove('mismatch-anim');
-                }, 1500);
+                }, 2500);
                 
                 selectedPracticeCard = null; 
             }
